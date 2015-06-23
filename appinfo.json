@@ -1,0 +1,19 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "antcodd@gmail.com",
+    "longName": "TriCalc",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "TriCalc",
+    "uuid": "2593bacc-3e79-4b1c-a84c-b9859be4be7a",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
