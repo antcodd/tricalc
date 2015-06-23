@@ -93,35 +93,6 @@ static void button_timer_reset(struct tricalc_click_context* clickcontext, uint3
   }
 }
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  struct tricalc_click_context* clickcontext = (struct tricalc_click_context*) context;
-  clickcontext->click_count++;
-  
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "click enter %d", click_number_of_clicks_counted(recognizer));
-  //if (!clickcontext->click_handled) {
-  //  clickcontext->long_click = true;
-  //  APP_LOG(APP_LOG_LEVEL_DEBUG, "repeating");
-  //} else {
-    if (clickcontext->timer_handle) {
-      app_timer_reschedule(clickcontext->timer_handle, 500);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, clickcontext->long_click ? "l click reschedule" : "click reschedule");
-    } else {
-      clickcontext->timer_handle = app_timer_register( 500, button_timer_elapsed_handler, clickcontext);
-      APP_LOG(APP_LOG_LEVEL_DEBUG, clickcontext->long_click ? "l click register" : "click register");
-    }
-  //}
-  update_label(clickcontext);
-}
-
-static void select_repeating_click_handler(ClickRecognizerRef recognizer, void *context) {
-  struct tricalc_click_context* clickcontext = (struct tricalc_click_context*) context;
-  clickcontext->click_count++;
-  
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "repeating click enter %d", click_number_of_clicks_counted(recognizer));
-  clickcontext->long_click = true;
-  update_label(clickcontext);
-}
-
 static void click_up_handler(ClickRecognizerRef recognizer, void *context) {
   struct tricalc_click_context* clickcontext = (struct tricalc_click_context*) context;
   
