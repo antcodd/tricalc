@@ -14,7 +14,27 @@ struct tricalc_click_context {
   AppTimer* timer_handle;
 };
 
-char* buttonvalues[NUM_BUTTONS] = {"", "123.", "456E", "7890"};
+char* buttonvalues[NUM_BUTTONS] = {"    ", "123.", "456E", "7890"};
+#define NUM_BUTTONVALUES 4
+
+typedef enum {
+  OP_PLUS,
+  OP_MINUS,
+  OP_MULTIPLY,
+  OP_DIVIDE,
+  OP_ENTER,
+  OP_NUM_OPS
+} tricalc_op;
+char* op_strings[OP_NUM_OPS] = {"+", "-", "*", "/", "ENTER"};
+
+#define MAX_OPVALUES 4
+
+/*TODO: better way?*/
+typedef struct {
+  tricalc_op ops[MAX_OPVALUES];
+  size_t len;
+} tricalc_opvalues;
+tricalc_opvalues buttonvalues_op[NUM_BUTTONS] = {{{},0}, {{OP_PLUS, OP_MINUS}, 2}, {{OP_MULTIPLY, OP_DIVIDE}, 2}, {{OP_ENTER}, 1}};
 
 char accumulator_string[100] = "\0";
 uint32_t accumulator_string_offset = 0;
@@ -24,28 +44,33 @@ static void button_timer_reset(struct tricalc_click_context* clickcontext, uint3
 /*FIXME*/
 struct tricalc_click_context click_context = {false, false, 0, NUM_BUTTONS, NULL};
                                       
+tricalc_op get_op_for_button(struct tricalc_click_context* clickcontext) {
+  int offset = (clickcontext->click_count - 1) % buttonvalues_op[clickcontext->button].len;
+  
+  return buttonvalues_op[clickcontext->button].ops[offset];
+}
+
+char get_value_for_button(struct tricalc_click_context* clickcontext) {
+  int offset = (clickcontext->click_count - 1) % NUM_BUTTONVALUES;
+  
+  if (clickcontext->button < NUM_BUTTONS) {
+    return buttonvalues[clickcontext->button][offset];
+  }
+  
+  return '\0';
+}
+
 static void update_label(struct tricalc_click_context* clickcontext) {
-  int clickid = (clickcontext->click_count - 1) % 4;
   APP_LOG(APP_LOG_LEVEL_DEBUG, clickcontext->long_click ? "l update" : "update" );
   if (!clickcontext->long_click) {
-    if (clickcontext->button < NUM_BUTTONS && accumulator_string_offset < (sizeof(accumulator_string)-1)) {
-      accumulator_string[accumulator_string_offset] = buttonvalues[clickcontext->button][clickid];
+    if (accumulator_string_offset < (sizeof(accumulator_string)-1)) {
+      accumulator_string[accumulator_string_offset] = get_value_for_button(clickcontext);
     }
     text_layer_set_text(text_layer, accumulator_string);
   } else {
-    switch (clickid) {
-      case 0:
-        text_layer_set_text(op_text_layer, "*");
-        break;
-      case 1:
-        text_layer_set_text(op_text_layer, "/");
-        break;
-      case 2:
-        text_layer_set_text(op_text_layer, "+");
-        break;
-      case 3:
-        text_layer_set_text(op_text_layer, "-");
-        break;
+    if (clickcontext->button < NUM_BUTTONS) {
+      tricalc_op op = get_op_for_button(clickcontext);
+      text_layer_set_text(op_text_layer, op_strings[op]);
     }
   }
 }
