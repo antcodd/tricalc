@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include "tricalc.h"
 
 Window *window;
 TextLayer *text_layer;
@@ -17,14 +18,6 @@ struct tricalc_click_context {
 char* buttonvalues[NUM_BUTTONS] = {"    ", "123.", "456E", "7890"};
 #define NUM_BUTTONVALUES 4
 
-typedef enum {
-  OP_PLUS,
-  OP_MINUS,
-  OP_MULTIPLY,
-  OP_DIVIDE,
-  OP_ENTER,
-  OP_NUM_OPS
-} tricalc_op;
 char* op_strings[OP_NUM_OPS] = {"+", "-", "*", "/", "ENTER"};
 
 #define MAX_OPVALUES 4
