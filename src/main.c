@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include "tricalc.h"
+#include "op_stack.h"
 
 Window *window;
 TextLayer *text_layer;
@@ -31,6 +32,7 @@ tricalc_opvalues buttonvalues_op[NUM_BUTTONS] = {{{},0}, {{OP_PLUS, OP_MINUS}, 2
 
 char accumulator_string[100] = "\0";
 uint32_t accumulator_string_offset = 0;
+tricalc_op_stack stack;
 
 static void button_timer_reset(struct tricalc_click_context* clickcontext, uint32_t timeout_ms);  
 
@@ -58,6 +60,7 @@ static void update_label(struct tricalc_click_context* clickcontext) {
   if (!clickcontext->long_click) {
     if (accumulator_string_offset < (sizeof(accumulator_string)-1)) {
       accumulator_string[accumulator_string_offset] = get_value_for_button(clickcontext);
+      accumulator_string[accumulator_string_offset+1] = '\0';
     }
     text_layer_set_text(text_layer, accumulator_string);
   } else {
@@ -68,11 +71,65 @@ static void update_label(struct tricalc_click_context* clickcontext) {
   }
 }
 
+static int perform_op(tricalc_op op, double a, double b,  double* result) {
+  int arity = 2;
+  
+  if (result == NULL)
+    return 0;
+  
+  switch (op) {
+    case OP_PLUS:
+      *result = b + a;
+      break;
+    case OP_MINUS:
+      *result = b - a;
+      break;
+    case OP_MULTIPLY:
+      *result = b * a;
+      break;
+    case OP_DIVIDE:
+      *result = b / a;
+      break;
+    case OP_ENTER:
+      /*XXX: this means current value is populated the next time, which may want to be configurable*/
+      *result = a;
+       arity = 1;
+       break;
+    default:
+      return 0;
+  }
+  
+  return arity;
+}
+
 static void action_commit(struct tricalc_click_context* clickcontext) {
   update_label(clickcontext);
   if (!clickcontext->long_click && accumulator_string_offset < (sizeof(accumulator_string)-1)) {
     accumulator_string_offset++;
     accumulator_string[accumulator_string_offset] = '\0';
+  }
+  if (clickcontext->long_click) {
+    tricalc_op op = get_op_for_button(clickcontext);
+    double b = (double) atoi(accumulator_string); //strtod(accumulator_string, NULL);
+    double a = 0;
+    double result = 0;
+    int arity = 0;
+    tricalc_op_stack_entry* item = tricalc_op_stack_peek(&stack);
+    a = item ? item->val : b;
+    
+    arity = perform_op(op, a, b, &result);
+    if (arity == 2) {
+      tricalc_op_stack_pop_value(&stack, NULL);
+    }
+    
+    if (arity != 0) {
+      tricalc_op_stack_push(&stack, result, op, a, b);
+      /*XXX: Pebble snprintf doesn't support any float printing functions!*/
+      /*TODO: Do this properly (ugh)*/
+      snprintf(accumulator_string, sizeof(accumulator_string), "%d.%03d", (int) result, (int)((int64_t)(result*1000) % 1000));
+      //reset accumulator so next input works correctly
+      accumulator_string_offset = 0;
+    }
   }
   text_layer_set_text(op_text_layer, "");
 }
@@ -194,6 +251,7 @@ static void click_config_provider(void* context) {
 }
 
 void handle_init(void) {
+  tricalc_op_stack_init(&stack);
   window = window_create();
   
   window_set_click_config_provider_with_context(window, click_config_provider, (void*) &click_context);
