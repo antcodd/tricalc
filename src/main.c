@@ -96,7 +96,7 @@ static int perform_op(tricalc_op op, double a, double b,  double* result) {
        arity = 1;
        break;
     default:
-      return 0;
+       return 0;
   }
   
   return arity;
@@ -110,20 +110,23 @@ static void action_commit(struct tricalc_click_context* clickcontext) {
   }
   if (clickcontext->long_click) {
     tricalc_op op = get_op_for_button(clickcontext);
-    double b = (double) atoi(accumulator_string); //strtod(accumulator_string, NULL);
-    double a = 0;
+    double a = (double) atoi(accumulator_string); //strtod(accumulator_string, NULL);
+    double b = 0;
     double result = 0;
     int arity = 0;
     tricalc_op_stack_entry* item = tricalc_op_stack_peek(&stack);
-    a = item ? item->val : b;
+    b = item ? item->val : a;
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "items %d", stack.items );
     
     arity = perform_op(op, a, b, &result);
     if (arity == 2) {
       tricalc_op_stack_pop_value(&stack, NULL);
     }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "items2 %d", stack.items );
     
     if (arity != 0) {
-      tricalc_op_stack_push(&stack, result, op, a, b);
+      if (op == OP_ENTER)
+        tricalc_op_stack_push(&stack, result, op, a, b);
       /*XXX: Pebble snprintf doesn't support any float printing functions!*/
       /*TODO: Do this properly (ugh)*/
       snprintf(accumulator_string, sizeof(accumulator_string), "%d.%03d", (int) result, (int)((int64_t)(result*1000) % 1000));
@@ -131,6 +134,7 @@ static void action_commit(struct tricalc_click_context* clickcontext) {
       accumulator_string_offset = 0;
     }
   }
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "items3 %d", stack.items );
   text_layer_set_text(op_text_layer, "");
 }
 

@@ -4,7 +4,7 @@
 bool tricalc_op_stack_push(tricalc_op_stack* stack, double result, tricalc_op op, double a, double b) {
   tricalc_op_stack_entry* item = NULL;
   
-  if (stack && stack->items > 0 && stack->items < TRICALC_OP_STACK_LEN)
+  if (stack && stack->items < TRICALC_OP_STACK_LEN)
   { 
     item = &stack->head[stack->items];
     item->val = result;
